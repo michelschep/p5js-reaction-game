@@ -6,8 +6,8 @@ let gameState = 'idle'; // idle, playing, finished
 let currentTarget = null;
 let targetCount = 0;
 let maxTargets = 10;
-let startTime = 0;
-let totalTime = 0;
+let lightStartTime = 0;
+let totalReactionTime = 0;
 let rankings = [];
 let nextLightDelay = 0;
 let waitingForNextLight = false;
@@ -80,7 +80,7 @@ function draw() {
   } else if (gameState === 'finished') {
     textSize(28);
     fill(100, 255, 100);
-    text(`TIME: ${(totalTime / 1000).toFixed(3)}s`, width / 2, padding + gridSize * cellSize + 60);
+    text(`TIME: ${(totalReactionTime / 1000).toFixed(3)}s`, width / 2, padding + gridSize * cellSize + 60);
     
     textSize(18);
     fill(255);
@@ -146,7 +146,7 @@ function mousePressed() {
 function startGame() {
   gameState = 'playing';
   targetCount = 0;
-  startTime = millis();
+  totalReactionTime = 0;
   waitingForNextLight = false;
   activateRandomCell();
 }
@@ -155,7 +155,7 @@ function resetGame() {
   gameState = 'idle';
   currentTarget = null;
   targetCount = 0;
-  totalTime = 0;
+  totalReactionTime = 0;
   waitingForNextLight = false;
   
   // Clear all active cells
@@ -191,6 +191,7 @@ function showNextLight() {
   let col = floor(random(gridSize));
   grid[row][col].active = true;
   currentTarget = { row, col };
+  lightStartTime = millis(); // Start timing when light appears
 }
 
 function checkCellClick() {
@@ -205,14 +206,15 @@ function checkCellClick() {
         
         if (cell.active) {
           // Correct cell clicked
+          let reactionTime = millis() - lightStartTime;
+          totalReactionTime += reactionTime;
           targetCount++;
           
           if (targetCount >= maxTargets) {
             // Game finished
-            totalTime = millis() - startTime;
             gameState = 'finished';
             cell.active = false;
-            saveRanking(totalTime);
+            saveRanking(totalReactionTime);
           } else {
             // Next target
             activateRandomCell();
